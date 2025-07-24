@@ -1,0 +1,5 @@
+%{
+  "castore": {:hex, :castore, "1.0.14", "4582dd7d630b48cf5e1ca8d3d42494db51e406b7ba704e81fbd401866366896a", [:mix], [], "hexpm", "7bc1b65249d31701393edaaac18ec8398d8974d52c647b7904d01b964137b9f4"},
+  "rustler_precompiled": {:hex, :rustler_precompiled, "0.7.3", "42cb9449785cd86c87453e39afdd27a0bdfa5c77a4ec5dc5ce45112e06b9f89b", [:mix], [{:castore, "~> 0.1 or ~> 1.0", [hex: :castore, repo: "hexpm", optional: false]}, {:rustler, "~> 0.23", [hex: :rustler, repo: "hexpm", optional: true]}], "hexpm", "cbc4b3777682e5f6f43ed39b0e0b4a42dccde8053aba91b4514e8f5ff9a5ac6d"},
+  "wireguardex": {:hex, :wireguardex, "0.4.0", "faf52256988dde1d9ccf880118e62191c4e6a9aebf9acd5d10158750df3b03be", [:mix], [{:rustler, ">= 0.0.0", [hex: :rustler, repo: "hexpm", optional: true]}, {:rustler_precompiled, "~> 0.7.0", [hex: :rustler_precompiled, repo: "hexpm", optional: false]}], "hexpm", "dcb3b95764695dca033443b40704967cbd0e002b5cf6fe37d6d4f1d110dfdedb"},
+}
