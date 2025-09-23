@@ -5,6 +5,9 @@ defmodule Teleflex.Configer do
 
   defp ensure_file() do
     unless File.exists?(@path) do
+      Path.dirname(@path)
+      |> File.mkdir_p!()
+
       write_config()
     end
 
