@@ -1,5 +1,6 @@
 defmodule Teleflex.IPnet do
   alias Teleflex.Conn
+  alias Teleflex.Configer
 
   @type ip4 :: {byte, byte, byte, byte}
   @type ip6 :: {byte, byte, byte, byte, byte, byte, byte, byte}
@@ -18,15 +19,15 @@ defmodule Teleflex.IPnet do
           }
 
 
-  @enforce_keys [:ipv4, :port]
-  defstruct ipv4: {0, 0, 0, 0}, ipv6: {0, 0, 0, 0, 0, 0, 0, 0}, dns: ".", port: Application.compile_env(:teleflex, :default_port)
+  @enforce_keys [:ipv4]
+  defstruct ipv4: {0, 0, 0, 0}, ipv6: {0, 0, 0, 0, 0, 0, 0, 0}, dns: ".", port: Configer.ports().first
 
   defimpl Inspect, for: Teleflex.IPnet do
     import Inspect.Algebra 
     alias Teleflex.IPnet
 
     def inspect(ipnet, _opts) do
-      concat ["IPnet<#{IPnet.get_addr(ipnet)}:#{ipnet.port}>"]
+      concat ["#IPnet<#{IPnet.get_addr(ipnet)}:#{ipnet.port}>"]
     end
   end
 
@@ -94,6 +95,8 @@ defmodule Teleflex.IPnet do
   end
 
   defimpl Conv, for: BitString do
+    alias Teleflex.IPnet
+
     @spec to_str(str :: String.t()) :: String.t() | {:error, String.t()}
     def to_str(str), do: str
 
@@ -164,18 +167,20 @@ defmodule Teleflex.IPnet do
   def which_ip(data), do: Conv.which_ip(data)
 
 
-  ## Funcs for IPnet
-  @spec new(ipv4 :: ip4(), port :: tf_port(), opts :: keyword()) :: __MODULE__.t()
-  def new(ipv4, port \\ 12000, opts \\ []) do
-    ipv6 = Keyword.get(opts, :ipv6, default(:ip6))
-    dns = Keyword.get(opts, :dns, default(:dns))
 
-    %__MODULE__{
-      ipv4: ipv4,
-      ipv6: ipv6,
-      dns: dns,
-      port: port
-    }
+  ## Outer funcs
+  @spec default(atom()) :: term() 
+  def default(:port) do 
+    Configer.ports().first
+  end
+  def default(:ip6) do
+    {0, 0, 0, 0, 0, 0, 0, 0}
+  end 
+  def default(:ip4) do
+    {0, 0, 0, 0}
+  end
+  def default(:dns) do
+    "."
   end
 
   @spec my() :: __MODULE__.t()
@@ -193,26 +198,28 @@ defmodule Teleflex.IPnet do
     new(ipv4, default(:port), ipv6: ipv6)
   end
 
+
+
+  ## Funcs for IPnet
+  @spec new(ipv4 :: ip4(), port :: tf_port(), opts :: keyword()) :: __MODULE__.t()
+  def new(ipv4, port \\ 12000, opts \\ []) do
+    ipv6 = Keyword.get(opts, :ipv6, default(:ip6))
+    dns = Keyword.get(opts, :dns, default(:dns))
+
+    %__MODULE__{
+      ipv4: ipv4,
+      ipv6: ipv6,
+      dns: dns,
+      port: port
+    }
+  end
+
   @spec get_addr(ipnet :: __MODULE__.t()) :: String.t()
   def get_addr(%__MODULE__{} = ipnet) do
     cond do
-      ipnet.dns != "" -> ipnet.dns
-      ipnet.ipv6 != {0, 0, 0, 0, 0, 0, 0, 0} -> "[#{ipnet.ipv6 |> to_str!()}]"
+      ipnet.dns != default(:dns) -> ipnet.dns
+      ipnet.ipv6 != default(:ip6) -> "[#{ipnet.ipv6 |> to_str!()}]"
       true -> ipnet.ipv4 |> to_str!()
     end
-  end
-
-  @spec default(atom()) :: term() 
-  def default(:port) do 
-    Application.fetch_env!(:teleflex, :default_port)
-  end
-  def default(:ip6) do
-    {0, 0, 0, 0, 0, 0, 0, 0}
-  end 
-  def default(:ip4) do
-    {0, 0, 0, 0}
-  end
-  def default(:dns) do
-    "."
   end
 end

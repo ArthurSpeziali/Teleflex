@@ -2,10 +2,13 @@ import Config
 
 config :teleflex,
   path: "~/.teleflex" |> Path.expand(),
-  persist_time: 30,
-  default_port: 12_000,
-  range_port: 64
+  persist_time: 30
 
 config :teleflex, :urls,
   internet_check: "https://www.google.com",
   ip_fetch: "https://ident.me"
+
+config :teleflex, :node_opts,
+  name: :teleflex,
+  proc: :messager,
+  cookie: :fish
