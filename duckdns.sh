@@ -61,7 +61,7 @@ setup_duckdns_script() {
     mkdir -p "$INSTALL_DIR"
     cat > "$SCRIPT_FILE" <<EOF
 #!/bin/bash
-echo url="https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&ipv6=\$(curl -6 ifconfig.me)" \\
+echo url="https://www.duckdns.org/update?domains=$DOMAIN&token=$TOKEN&verbose=true&ip=\$(curl -4 ifconfig.me)&ipv6=\$(curl -s -6 ifconfig.me || echo '')" \\
 | curl -k -o "$LOG_FILE" -K -
 EOF
     chmod +x "$SCRIPT_FILE"
