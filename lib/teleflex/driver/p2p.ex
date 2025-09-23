@@ -13,7 +13,7 @@ defmodule Teleflex.Driver.P2P do
     dest = IPnet.get_addr(my_ipnet)
     node = :"#{@node_name}@#{dest}"
 
-    case :net_kernel.start([node]) do
+    case Node.start(node) do
       {:ok, _pid} -> 
         Node.set_cookie(@node_cookie) 
         :ok
