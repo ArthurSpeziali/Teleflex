@@ -27,14 +27,14 @@ defmodule Teleflex.Conn do
     url = Application.fetch_env!(:teleflex, :urls)[:ip_fetch]
 
     Req.get!(url).body
-    |> IPnet.string_to_ip!()
+    |> IPnet.to_ip!()
   end
 
-  @spec get_ipv6!() :: IPnet.ip6()
+  @spec get_ipv6!() :: IPnet.ip6() | IPnet.ip4()
   def get_ipv6!() do
     url = Application.fetch_env!(:teleflex, :urls)[:ip_fetch]
 
     Req.get!(url, inet6: true).body
-    |> IPnet.string_to_ip!()
+    |> IPnet.to_ip!()
   end
 end
