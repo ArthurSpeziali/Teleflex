@@ -1,9 +1,7 @@
 defmodule Teleflex.Configer do
-  @on_load :ensure_file
-
   @path Application.compile_env!(:teleflex, :path) |> Path.join("config.json")
 
-  defp ensure_file() do
+  def init() do
     unless File.exists?(@path) do
       Path.dirname(@path)
       |> File.mkdir_p!()

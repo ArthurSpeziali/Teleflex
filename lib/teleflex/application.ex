@@ -7,6 +7,9 @@ defmodule Teleflex.Application do
 
   @impl true
   def start(_type, _args) do
+    Teleflex.WireGuard.init()
+    Teleflex.Configer.init()
+
     children = [
       # Starts a worker by calling: Teleflex.Worker.start_link(arg)
       # {Teleflex.Worker, arg}

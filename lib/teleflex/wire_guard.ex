@@ -3,8 +3,6 @@ defmodule Teleflex.WireGuard do
   import Wireguardex.PeerConfigBuilder, except: [public_key: 2]
   import Wireguardex, only: [set_device: 2]
 
-  @on_load :init
-
   @path Application.compile_env(:teleflex, :path)
   @interface "wg0"
   @fwmark 0xFF55
