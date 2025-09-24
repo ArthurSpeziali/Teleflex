@@ -8,10 +8,12 @@ defmodule Teleflex.Driver.P2P do
   @node_proc Application.compile_env(:teleflex, :node_opts)[:proc]
 
 
-  @spec init(ipnet :: IPnet.t()) :: Driver.feedback()
-  def init(%IPnet{} = my_ipnet) do
+  @spec start(ipnet :: IPnet.t()) :: Driver.feedback()
+  def start(%IPnet{} = my_ipnet) do
     dest = IPnet.get_addr(my_ipnet)
     node = :"#{@node_name}@#{dest}"
+
+    Process.register(self(), @node_proc)
 
     case Node.start(node) do
       {:ok, _pid} -> 
@@ -23,22 +25,34 @@ defmodule Teleflex.Driver.P2P do
     end
   end
 
-  @spec send_to(ipnet :: IPnet.t(), msg :: term()) :: Driver.feedback()
-  def send_to(%IPnet{} = its_ipnet, msg) do 
-    dest = IPnet.get_addr(its_ipnet)
+  @spec connect(my :: IPnet.t(), its :: IPnet.t()) :: Driver.response()
+  def connect(%IPnet{} = my, %IPnet{} = its) do 
+    {:ok,
+      %Driver{
+        my: my,
+        its: its
+      }
+    }
+  end
+
+  @spec send_to(driver :: Driver.t(), msg :: term()) :: Driver.feedback()
+  def send_to(%Driver{} = driver, msg) do 
+    dest = IPnet.get_addr(driver.its)
     node = :"#{@node_name}@#{dest}"
 
     if Node.ping(node) == :pong do
-      send {@node_proc, node}, msg
+      self_dest = IPnet.get_addr(driver.my)
+
+      send {@node_proc, node}, {self_dest, msg}
       :ok
     else
       {:error, "node unreachable"}
     end
   end
 
-  @spec ping(ipnet :: IPnet.t()) :: Driver.feedback()
-  def ping(%IPnet{} = its_ipnet) do
-    dest = IPnet.get_addr(its_ipnet)
+  @spec ping(driver :: Driver.t()) :: Driver.feedback()
+  def ping(%Driver{} = driver) do
+    dest = IPnet.get_addr(driver.its)
     node = :"#{@node_name}@#{dest}"
 
     if Node.ping(node) == :pong do
@@ -48,15 +62,40 @@ defmodule Teleflex.Driver.P2P do
     end
   end
 
-  @spec receive_from(ipnet :: IPnet.t(), timeout :: pos_integer() | :infinity) :: Driver.response()
-  def receive_from(%IPnet{} = its_ipnet, timeout \\ 5_000) do
-    dest = IPnet.get_addr(its_ipnet)
+  @spec receive_from(driver :: Driver.t(), timeout :: pos_integer() | :infinity) :: Driver.response()
+  def receive_from(%Driver{} = driver, timeout \\ 5_000) do
+    dest = IPnet.get_addr(driver.its)
+    messages = loop_receive_from(dest, timeout)
 
+    if messages == [] do
+      {:error, "timeout"}
+    else 
+      messages
+    end
+  end
+
+  defp loop_receive_from(dest, timeout) do 
     receive do 
-      {^dest, msg} -> {:ok, msg}
+      {^dest, msg} -> 
+        [msg | loop_receive_from(dest, 50)]
     after 
-      timeout -> {:error, "timeout error"}
+      timeout -> []
     end
   end
 
+  @spec receive_all(driver :: Driver.t()) :: list()
+  def receive_all(%Driver{} = _driver) do 
+    loop_receive_all()
+  end
+
+  defp loop_receive_all() do
+    receive do
+      {_, msg} -> 
+        [msg | loop_receive_all()]
+
+    after 
+      50 -> 
+        []
+    end
+  end
 end

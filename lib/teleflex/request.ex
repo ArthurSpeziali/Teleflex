@@ -1,4 +1,4 @@
-defmodule Teleflex.Conn do
+defmodule Teleflex.Request do
   alias Teleflex.IPnet
 
 

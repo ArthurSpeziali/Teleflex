@@ -1,5 +1,5 @@
 defmodule Teleflex.IPnet do
-  alias Teleflex.Conn
+  alias Teleflex.Request
   alias Teleflex.Configer
 
   @type ip4 :: {byte, byte, byte, byte}
@@ -7,7 +7,6 @@ defmodule Teleflex.IPnet do
   @type ip :: ip4() | ip6()
   @type dns :: String.t()
   @type dest :: ip() | dns()
-  @type tf_port :: 12000..12063
 
   @typedoc "IP Address (dns and port) structure"
   @type t :: 
@@ -15,11 +14,10 @@ defmodule Teleflex.IPnet do
             ipv4: ip4(),
             ipv6: ip6(),
             dns: dns(),
-            port: tf_port()
+            port: port()
           }
 
 
-  @enforce_keys [:ipv4]
   defstruct ipv4: {0, 0, 0, 0}, ipv6: {0, 0, 0, 0, 0, 0, 0, 0}, dns: ".", port: Configer.ports().first
 
   defimpl Inspect, for: Teleflex.IPnet do
@@ -185,33 +183,44 @@ defmodule Teleflex.IPnet do
 
   @spec my() :: __MODULE__.t()
   def my() do
-    ipv4 = Conn.get_ipv4!()
-    ipv6 = Conn.get_ipv6!()
+    ipv4 = Request.get_ipv4!()
+    ipv6 = Request.get_ipv6!()
 
-    ipv6 = 
-      if ipv6 == ipv4 do
-        default(:ip6)
-      else
-        ipv6
-      end
+    if ipv6 == ipv4 do
+      new(ipv4)
+    else
+      new(ipv6, ipv4: ipv4)
+    end
+  end
 
-    new(ipv4, default(:port), ipv6: ipv6)
+  @spec define_dest(dest :: dest()) :: :ipv4 | :ipv6 | :dns | :error
+  def define_dest(dest) do
+    case dest do
+      dns when is_binary(dns) -> :dns 
+      ipv4 when is_tuple(ipv4) and (tuple_size(ipv4) == 4) -> :ipv4
+      ipv6 when is_tuple(ipv6) and (tuple_size(ipv6) == 8) -> :ipv6
+      _ -> :error
+    end
   end
 
 
-
   ## Funcs for IPnet
-  @spec new(ipv4 :: ip4(), port :: tf_port(), opts :: keyword()) :: __MODULE__.t()
-  def new(ipv4, port \\ 12000, opts \\ []) do
+  @spec new(dest :: dest(), opts :: keyword()) :: __MODULE__.t()
+  def new(dest, opts \\ []) do
+    ipv4 = Keyword.get(opts, :ipv4, default(:ip4))
     ipv6 = Keyword.get(opts, :ipv6, default(:ip6))
     dns = Keyword.get(opts, :dns, default(:dns))
+    port = Keyword.get(opts, :port, default(:port))
 
     %__MODULE__{
       ipv4: ipv4,
       ipv6: ipv6,
       dns: dns,
       port: port
-    }
+    } |> Map.update!(
+      define_dest(dest),
+      fn _ -> dest end
+    )
   end
 
   @spec get_addr(ipnet :: __MODULE__.t()) :: String.t()
