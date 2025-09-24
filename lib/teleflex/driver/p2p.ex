@@ -27,12 +27,20 @@ defmodule Teleflex.Driver.P2P do
 
   @spec connect(my :: IPnet.t(), its :: IPnet.t()) :: Driver.response()
   def connect(%IPnet{} = my, %IPnet{} = its) do 
-    {:ok,
-      %Driver{
-        my: my,
-        its: its
+    dest = IPnet.get_addr(my)
+    node = :"#{@node_name}@#{dest}"
+    res = Node.connect(node)
+
+    if res && res != :ignored do
+      {:ok,
+        %Driver{
+          my: my,
+          its: its
+        }
       }
-    }
+    else 
+      {:error, "node conn error"}
+    end
   end
 
   @spec send_to(driver :: Driver.t(), msg :: term()) :: Driver.feedback()
@@ -90,8 +98,8 @@ defmodule Teleflex.Driver.P2P do
 
   defp loop_receive_all() do
     receive do
-      {_, msg} -> 
-        [msg | loop_receive_all()]
+      {from, msg} -> 
+        [{from, msg} | loop_receive_all()]
 
     after 
       50 -> 
