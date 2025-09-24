@@ -30,13 +30,14 @@ defmodule Teleflex.IPnet do
   end
 
   defprotocol Conv do
-    def to_str(str)
+    def to_str(ip)
     def to_str!(ip)
     def to_ip(ip)
     def to_ip!(ip)
 
     def which_ip(ip)
     def which_ip!(ip)
+    def define_dest(ip)
   end
 
   ## IMPLs
@@ -90,6 +91,12 @@ defmodule Teleflex.IPnet do
         res -> res
       end
     end
+
+    @spec define_dest(ip :: IPnet.t()) :: :ipv4 | :ipv6 | :error
+    def define_dest(ip) when is_ip(ip) do
+      which_ip(ip)
+    end
+
   end
 
   defimpl Conv, for: BitString do
@@ -142,6 +149,22 @@ defmodule Teleflex.IPnet do
         res -> res
       end
     end
+
+    @spec define_dest(str :: binary()) :: :ipv4 | :ipv6 | :dns | :error
+    def define_dest(str) do
+      case which_ip(str) do
+        :ipv4 ->
+          String.replace(str, ".", "")
+          |> Integer.parse()
+          |> case do 
+            {_int, ""} -> :ipv4 
+            _any -> :dns
+          end
+
+        res ->
+          res
+      end
+    end
   end
 
   
@@ -164,6 +187,8 @@ defmodule Teleflex.IPnet do
   @spec which_ip(data :: any()) :: :ipv4 | :ipv6 | :error 
   def which_ip(data), do: Conv.which_ip(data)
 
+  @spec define_dest(data :: any()) :: :ipv4 | :ipv6 | :dns | :error
+  def define_dest(data), do: Conv.define_dest(data)
 
 
   ## Outer funcs
@@ -192,17 +217,6 @@ defmodule Teleflex.IPnet do
       new(ipv6, ipv4: ipv4)
     end
   end
-
-  @spec define_dest(dest :: dest()) :: :ipv4 | :ipv6 | :dns | :error
-  def define_dest(dest) do
-    case dest do
-      dns when is_binary(dns) -> :dns 
-      ipv4 when is_tuple(ipv4) and (tuple_size(ipv4) == 4) -> :ipv4
-      ipv6 when is_tuple(ipv6) and (tuple_size(ipv6) == 8) -> :ipv6
-      _ -> :error
-    end
-  end
-
 
   ## Funcs for IPnet
   @spec new(dest :: dest(), opts :: keyword()) :: __MODULE__.t()
