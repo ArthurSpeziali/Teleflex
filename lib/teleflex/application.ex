@@ -8,7 +8,7 @@ defmodule Teleflex.Application do
   @impl true
   def start(_type, _args) do
     Teleflex.WireGuard.init()
-    Teleflex.Configer.init()
+    Teleflex.Ajuster.init()
 
     Application.put_env(:kernel, :inet_dist_listen_min, 9000)
     Application.put_env(:kernel, :inet_dist_listen_max, 9000)

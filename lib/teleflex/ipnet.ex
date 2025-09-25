@@ -1,6 +1,6 @@
 defmodule Teleflex.IPnet do
   alias Teleflex.Request
-  alias Teleflex.Configer
+  alias Teleflex.Ajuster
 
   @type ip4 :: {byte, byte, byte, byte}
   @type ip6 :: {byte, byte, byte, byte, byte, byte, byte, byte}
@@ -18,7 +18,7 @@ defmodule Teleflex.IPnet do
           }
 
 
-  defstruct ipv4: {0, 0, 0, 0}, ipv6: {0, 0, 0, 0, 0, 0, 0, 0}, dns: ".", port: Configer.ports().first
+  defstruct ipv4: {0, 0, 0, 0}, ipv6: {0, 0, 0, 0, 0, 0, 0, 0}, dns: ".", port: Ajuster.ports().first
 
   defimpl Inspect, for: Teleflex.IPnet do
     import Inspect.Algebra 
@@ -194,7 +194,7 @@ defmodule Teleflex.IPnet do
   ## Outer funcs
   @spec default(atom()) :: term() 
   def default(:port) do 
-    Configer.ports().first
+    Ajuster.ports().first
   end
   def default(:ip6) do
     {0, 0, 0, 0, 0, 0, 0, 0}

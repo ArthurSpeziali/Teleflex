@@ -1,7 +1,7 @@
 defmodule Teleflex.Driver do
   alias Teleflex.IPnet
-  alias Teleflex.Configer
-  @mod Configer.driver()
+  alias Teleflex.Ajuster
+  @mod Ajuster.driver()
 
   @type feedback() :: :ok | {:error, reason :: String.t()}
   @type response() :: {:ok, term()} | {:error, reason :: String.t()}
