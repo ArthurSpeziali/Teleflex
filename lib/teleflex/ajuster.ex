@@ -16,7 +16,9 @@ defmodule Teleflex.Ajuster do
     %{
       "driver" => "p2p",
       "default_port" => 12_000,
-      "range_port" => 64
+      "range_port" => 64,
+      "max_size" => 1 * 1_024 ** 2, ## 1MB
+      "block_list" => []
     }
   end
 
@@ -32,8 +34,14 @@ defmodule Teleflex.Ajuster do
     config = File.read!(@path)
            |> Jason.decode!()
 
-    new = %{config | field => default_config()[field]} 
-          |> Jason.encode!(pretty: true)
+    new = 
+      if config[field] do 
+        %{config | field => default_config()[field]} 
+        |> Jason.encode!(pretty: true)
+      else 
+        Map.put(config, field, default_config()[field])
+        |> Jason.encode!(pretty: true)
+      end
 
     File.write!(
       @path, 
@@ -66,12 +74,38 @@ defmodule Teleflex.Ajuster do
     port = Map.get(config, "default_port")
     range = Map.get(config, "range_port")
 
-    if !port || !range do
+    if is_integer(port) && is_integer(range) do
+      port..port+(range - 1)//1
+    else 
       write_config("default_port")
       write_config("range_port")
       default(:port)
+    end
+  end
+
+  def max_size() do
+    max_size = File.read!(@path)
+               |> Jason.decode!()
+               |> Map.get("max_size")
+
+    if is_integer(max_size) do
+      max_size
     else 
-      port..port+(range - 1)//1
+      write_config("max_size")
+      default(:max_size)
+    end
+  end
+
+  def block_list() do 
+    block_list = File.read!(@path)
+               |> Jason.decode!()
+               |> Map.get("block_list")
+
+    if is_list(block_list) do 
+      block_list
+    else 
+      write_config("block_list")
+      default(:block_list)
     end
   end
 
@@ -81,5 +115,11 @@ defmodule Teleflex.Ajuster do
   end
   defp default(:port) do 
     12_000..12_063//1
+  end
+  defp default(:max_size) do 
+    1 * 1024 ** 2
+  end
+  defp default(:block_list) do
+    []
   end
 end
