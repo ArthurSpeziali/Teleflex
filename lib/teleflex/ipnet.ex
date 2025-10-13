@@ -38,6 +38,8 @@ defmodule Teleflex.IPnet do
     def which_ip(ip)
     def which_ip!(ip)
     def define_dest(ip)
+
+    def valid_ip?(ip)
   end
 
   ## IMPLs
@@ -92,11 +94,61 @@ defmodule Teleflex.IPnet do
       end
     end
 
-    @spec define_dest(ip :: IPnet.t()) :: :ipv4 | :ipv6 | :error
+    @spec define_dest(ip :: IPnet.ip()) :: :ipv4 | :ipv6 | :error
     def define_dest(ip) when is_ip(ip) do
       which_ip(ip)
     end
 
+    @spec valid_ip?(ip :: IPnet.ip()) :: boolean() 
+    def valid_ip?(ip) when is_ip(ip) do 
+      case which_ip(ip) do 
+        :ipv4 -> 
+          {b1, b2, b3, b4} = ip 
+
+          if !(b1 in 1..254//1 && b2 in 0..255//1 && b4 in 1..255//1), do: throw("invalid ip range")
+          if b1 == 255 && b2 == 255 && b3 == 255 && b4 == 255, do: throw("broadcast is invalid")
+
+          ## IPs Reserveds
+          if b1 == 10, do: throw("reserved ip")
+          if b1 == 172 && b2 in 16..31//1, do: throw("reserved ip")
+          if b1 == 192, do: throw("reserved ip")
+          if b1 == 127, do: throw("reserved ip")
+          if b1 == 169 && b2 == 254, do: throw("reserved ip") 
+          if b1 in 224..239//1, do: throw("reserved ip") 
+          if b1 == 0, do: throw("reserved ip") 
+          if b1 == 255, do: throw("reserved ip")
+          if b1 == 100 && b2 == 64, do: throw("reserved ip")
+          if b1 == 198 && b2 == 18, do: throw("reserved ip")
+          if b1 == 198 && b2 == 51 && b3 == 100, do: throw("reserved ip")
+          if b1 == 203 && b2 == 0 && b3 == 113, do: throw("reserved ip")
+
+        
+        :ipv6 -> 
+          list_bytes = Tuple.to_list(ip)
+
+          all? =
+            Enum.all?(list_bytes, fn byte ->
+              byte in 0..0xffff
+            end)  
+
+          if !all?, do: throw("invalid ip range")  
+          if Enum.sum(list_bytes) == 0, do: throw("null ip")  
+
+          ## IPs reserved
+          if {0, 0, 0, 0, 0, 0, 0, 1} == ip, do: throw("reserved ip")  
+          if List.first(list_bytes) == 0xfe80, do: throw("reserved ip")
+          if List.first(list_bytes) == 0xff00, do: throw("reserved ip")
+          if List.first(list_bytes) == 0xfc00, do: throw("reserved ip")
+          if Enum.at(list_bytes, 2) == 0xffff, do: throw("reserved ip")
+          if Enum.at(list_bytes, 0) == 0x64 && Enum.at(list_bytes, 1) == 0xff9b, do: throw("reserved ip")
+          if Enum.at(list_bytes, 0) == 0x2001 && Enum.at(list_bytes, 1) == 0xdb8, do: throw("reserved ip")
+          if List.first(list_bytes) in [0x100, 0x2000, 0x3000], do: throw("reserved ip")
+      end
+
+      true
+    catch 
+      _value -> false
+    end
   end
 
   defimpl Conv, for: BitString do
@@ -165,6 +217,14 @@ defmodule Teleflex.IPnet do
           res
       end
     end
+
+    @spec valid_ip?(str :: binary()) :: boolean()
+    def valid_ip?(str) do
+      case to_ip(str) do 
+        {:error, _} -> false
+        ip -> IPnet.valid_ip?(ip)
+      end
+    end
   end
 
   
@@ -189,6 +249,9 @@ defmodule Teleflex.IPnet do
 
   @spec define_dest(data :: any()) :: :ipv4 | :ipv6 | :dns | :error
   def define_dest(data), do: Conv.define_dest(data)
+
+  @spec valid_ip?(data :: any()) :: boolean()
+  def valid_ip?(data), do: Conv.valid_ip?(data)
 
 
   ## Outer funcs
@@ -218,11 +281,22 @@ defmodule Teleflex.IPnet do
     end
   end
 
+
   ## Funcs for IPnet
   @spec new(dest :: dest(), opts :: keyword()) :: __MODULE__.t()
   def new(dest, opts \\ []) do
+    type = define_dest(dest)
+    dest = 
+      if type != :dns do 
+        to_ip!(dest)
+      end
+
     ipv4 = Keyword.get(opts, :ipv4, default(:ip4))
+           |> to_ip()
+
     ipv6 = Keyword.get(opts, :ipv6, default(:ip6))
+           |> to_ip()
+
     dns = Keyword.get(opts, :dns, default(:dns))
     port = Keyword.get(opts, :port, default(:port))
 
@@ -232,7 +306,7 @@ defmodule Teleflex.IPnet do
       dns: dns,
       port: port
     } |> Map.update!(
-      define_dest(dest),
+      type,
       fn _ -> dest end
     )
   end
@@ -246,3 +320,4 @@ defmodule Teleflex.IPnet do
     end
   end
 end
+
