@@ -2,10 +2,10 @@ defmodule Teleflex.Ajuster do
   @path Application.compile_env!(:teleflex, :path) |> Path.join("config.json")
 
   def init() do
-    unless File.exists?(@path) do
-      Path.dirname(@path)
-      |> File.mkdir_p!()
+    Path.dirname(@path)
+    |> File.mkdir_p!()
 
+    if !File.exists?(@path) do
       write_config()
     end
 

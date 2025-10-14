@@ -11,8 +11,10 @@ defmodule Teleflex.Application do
     Teleflex.WireGuard.init()
     Teleflex.init()
 
-    Application.put_env(:kernel, :inet_dist_listen_min, 9000)
-    Application.put_env(:kernel, :inet_dist_listen_max, 9000)
+    ports = Teleflex.Ajuster.ports()
+
+    Application.put_env(:kernel, :inet_dist_listen_min, ports.first)
+    Application.put_env(:kernel, :inet_dist_listen_max, ports.last)
 
     children = [
       # Starts a worker by calling: Teleflex.Worker.start_link(arg)
