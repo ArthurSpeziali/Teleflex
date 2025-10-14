@@ -26,7 +26,9 @@ defmodule Teleflex.Request do
   def get_ipv4!() do
     url = Application.fetch_env!(:teleflex, :urls)[:ip_fetch]
 
-    Req.get!(url).body
+    Req.get!(url, 
+      connect_options: [timeout: 15_000]
+    ).body
     |> IPnet.to_ip!()
   end
 
@@ -34,7 +36,10 @@ defmodule Teleflex.Request do
   def get_ipv6!() do
     url = Application.fetch_env!(:teleflex, :urls)[:ip_fetch]
 
-    Req.get!(url, inet6: true).body
+    Req.get!(url, 
+      connect_options: [timeout: 15_000],
+      inet6: true
+    ).body
     |> IPnet.to_ip!()
   end
 end
