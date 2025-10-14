@@ -1,5 +1,6 @@
 defmodule Teleflex.Ajuster do
   @path Application.compile_env!(:teleflex, :path) |> Path.join("config.json")
+  @on_load :init
 
   def init() do
     Path.dirname(@path)

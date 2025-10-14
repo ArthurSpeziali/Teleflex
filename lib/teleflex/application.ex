@@ -7,7 +7,6 @@ defmodule Teleflex.Application do
 
   @impl true
   def start(_type, _args) do
-    Teleflex.Ajuster.init()
     Teleflex.WireGuard.init()
     Teleflex.init()
 
