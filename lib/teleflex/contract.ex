@@ -1,4 +1,6 @@
 defmodule Teleflex.Contract do
+  alias Teleflex.Driver
+  alias Teleflex.IPnet
   alias Teleflex.Ajuster
   alias Teleflex.Validate
 
@@ -9,6 +11,8 @@ defmodule Teleflex.Contract do
   @type t() :: %__MODULE__{
     name: String.t(),
     id: hash_byte(),
+    my: IPnet.t(),
+    its: IPnet.t(),
     size: pos_integer(),
     hash: binary(),
     max_size: pos_integer(),
@@ -17,8 +21,8 @@ defmodule Teleflex.Contract do
     blob: binary()
   }
 
-  @enforce_keys [:name, :id, :max_size]
-  defstruct name: "", id: <<0::64*8>>, size: 0, hash: <<0::64*8>>, max_size: 0, block_list: [], compromise: :waiting, blob: <<>>
+  @enforce_keys [:name, :id, :max_size, :my, :its]
+  defstruct name: "", id: <<0::64*8>>, my: %IPnet{}, its: %IPnet{}, size: 0, hash: <<0::64*8>>, max_size: 0, block_list: [], compromise: :waiting, blob: <<>>
 
 
   defimpl Inspect, for: Teleflex.Contract do
@@ -32,16 +36,18 @@ defmodule Teleflex.Contract do
 
 
   ## Funcs
-  @spec new(text :: String.t()) :: response()
-  def new(text) do
-    if !Validate.str?(text) do
+  @spec new(text :: String.t(), driver :: Driver.t()) :: response()
+  def new(text, %Driver{} = driver) do
+    if !Validate.str?(text) do 
       throw("invalid string")
     end
 
-    {:ok, 
+    contract = 
       %__MODULE__{
         name: gen_name(),
         id: gen_id(),
+        my: driver.my, 
+        its: driver.its,
         size: byte_size(text),
         hash: get_hash(text),
         max_size: Ajuster.max_size(),
@@ -49,7 +55,12 @@ defmodule Teleflex.Contract do
         compromise: :waiting, 
         blob: text
       }
-    }
+
+    if blocked?(contract, driver) do
+      {:ok, contract}
+    else 
+      {:error, "dest is blocked"}
+    end
 
   catch 
     value -> 
@@ -77,5 +88,26 @@ defmodule Teleflex.Contract do
   @spec get_hash(blob :: binary()) :: hash_byte()
   def get_hash(blob) do
     :crypto.hash(:sha256, blob)
+  end
+
+
+  ## Funcs for Contract 
+  @spec block(__MODULE__.t(), Driver.t()) :: boolean()
+  def block(%__MODULE__{block_list: block_list}, %Driver{its: ipnet}) do 
+    dest = IPnet.get_addr(ipnet)
+    block_list = [dest | block_list]
+    
+    if !(dest in block_list) do
+      Ajuster.change("block_list", block_list)
+      true 
+    else 
+      false 
+    end
+  end
+
+  @spec blocked?(__MODULE__.t(), Driver.t()) :: boolean()
+  def blocked?(%__MODULE__{block_list: block_list}, %Driver{its: ipnet}) do 
+    dest = IPnet.get_addr(ipnet)
+    !(dest in block_list)
   end
 end

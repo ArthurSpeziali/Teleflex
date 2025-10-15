@@ -70,7 +70,7 @@ defmodule Teleflex.Driver.P2P do
     end
   end
 
-  @spec receive_from(driver :: Driver.t(), timeout :: pos_integer() | :infinity) :: Driver.response()
+  @spec receive_from(driver :: Driver.t(), timeout :: pos_integer() | :infinity) :: {:error, String.t()} | String.t()
   def receive_from(%Driver{} = driver, timeout \\ 5_000) do
     dest = IPnet.get_addr(driver.its)
     messages = loop_receive_from(dest, timeout)

@@ -110,6 +110,23 @@ defmodule Teleflex.Ajuster do
     end
   end
 
+  def change(field, value) do
+    config = File.read!(@path)
+           |> Jason.decode!()
+
+    new = Map.update(
+      config,
+      field,
+      default(:block_list),
+      fn _ -> value end
+    ) |> Jason.encode!(pretty: true)
+
+    File.write!(
+      @path, 
+      new
+    )
+  end
+
 
   defp default(:driver) do 
     Teleflex.Driver.P2P
