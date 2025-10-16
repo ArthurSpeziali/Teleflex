@@ -147,4 +147,75 @@ defmodule Teleflex.Contract do
     value -> 
       {:error, value}
   end
+
+  # @spec valid?(contract :: __MODULE__.t()) :: boolean()
+  # def valid?(%__MODULE__{} = contract) do 
+    
+  # end
+
+  def valid_id?(str) do 
+    Validate.str?(str) && byte_size(str) == 64
+  end
+
+  def valid_name?(str) do 
+    if !Validate.str?(str), do: throw(false)
+
+    try do 
+      String.to_integer(str)
+    rescue 
+      _e ->
+        throw(false) 
+    else 
+      value -> 
+        match? {:ok, _}, DateTime.from_unix(value)
+    end
+
+  catch
+    any -> any
+  end
+
+  def valid_size?(nil), do: true
+  def valid_size?(int) do
+    limit_max_size = Application.get_env(:teleflex, :limit_max_size)
+    is_integer(int) && int > 1 && int <= limit_max_size
+  end
+
+  def valid_maxsize?(int) do 
+    limit_max_size = Application.get_env(:teleflex, :limit_max_size)
+    is_integer(int) && int > 1 && int <= limit_max_size
+  end 
+
+  def valid_hash?(nil), do: true
+  def valid_hash?(bin) do 
+    is_binary(bin) && byte_size(bin) == 32
+  end
+
+  def valid_blob?(nil), do: true
+  def valid_blob?(bin) do 
+    is_binary(bin)
+  end
+
+  def valid_blocklist?(list) do 
+    is_list(list) && Enum.all?(list, fn item -> 
+      Validate.str?(item)
+    end)
+  end
+
+  def valid_compromise?(atom) do 
+    atom in [:waiting, :process, :accept, :ignored]
+  end
+
+  def valid_driver?(struct) do 
+    case struct do 
+      %Driver{} = driver->
+        if [:its, :my] -- Map.keys(driver) != [] do
+          false
+        else 
+          IPnet.valid?(driver.my) && IPnet.valid?(driver.its)
+        end
+
+      _ -> 
+        false
+    end
+  end
 end

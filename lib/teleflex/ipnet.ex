@@ -1,18 +1,19 @@
 defmodule Teleflex.IPnet do
   alias Teleflex.Request
   alias Teleflex.Ajuster
+  alias Teleflex.Validate
 
-  @type ip4 :: {byte, byte, byte, byte}
-  @type ip6 :: {byte, byte, byte, byte, byte, byte, byte, byte}
-  @type ip :: ip4() | ip6()
+  @type ipv4 :: {byte, byte, byte, byte}
+  @type ipv6 :: {byte, byte, byte, byte, byte, byte, byte, byte}
+  @type ip :: ipv4() | ipv6()
   @type dns :: String.t()
   @type dest :: ip() | dns()
 
   @typedoc "IP Address (dns and port) structure"
   @type t :: 
           %__MODULE__{
-            ipv4: ip4(),
-            ipv6: ip6(),
+            ipv4: ipv4(),
+            ipv6: ipv6(),
             dns: dns(),
             port: port()
           }
@@ -259,10 +260,10 @@ defmodule Teleflex.IPnet do
   def default(:port) do 
     Ajuster.ports().first
   end
-  def default(:ip6) do
+  def default(:ipv6) do
     {0, 0, 0, 0, 0, 0, 0, 0}
   end 
-  def default(:ip4) do
+  def default(:ipv4) do
     {0, 0, 0, 0}
   end
   def default(:dns) do
@@ -291,10 +292,10 @@ defmodule Teleflex.IPnet do
         to_ip!(dest)
       end
 
-    ipv4 = Keyword.get(opts, :ipv4, default(:ip4))
+    ipv4 = Keyword.get(opts, :ipv4, default(:ipv4))
            |> to_ip()
 
-    ipv6 = Keyword.get(opts, :ipv6, default(:ip6))
+    ipv6 = Keyword.get(opts, :ipv6, default(:ipv6))
            |> to_ip()
 
     dns = Keyword.get(opts, :dns, default(:dns))
@@ -315,9 +316,34 @@ defmodule Teleflex.IPnet do
   def get_addr(%__MODULE__{} = ipnet) do
     cond do
       ipnet.dns != default(:dns) -> ipnet.dns
-      ipnet.ipv6 != default(:ip6) -> "[#{ipnet.ipv6 |> to_str!()}]"
+      ipnet.ipv6 != default(:ipv6) -> "[#{ipnet.ipv6 |> to_str!()}]"
       true -> ipnet.ipv4 |> to_str!()
     end
   end
-end
 
+  @spec valid?(ipnet :: __MODULE__.t()) :: boolean() 
+  def valid?(%__MODULE__{} = ipnet) do 
+    if [:ipv4, :ipv6, :dns, :port] -- Map.keys(ipnet) != [], do: throw(false)
+
+    if !is_tuple(ipnet.ipv4) || !is_tuple(ipnet.ipv6) || !Validate.str?(ipnet.dns) || !is_integer(ipnet.port) do 
+      throw(false)
+    end
+
+    if ipnet.port < 1000, do: throw(false)
+    if !String.contains?(ipnet.dns, "."), do: throw(false)
+    if tuple_size(ipnet.ipv4) != 4 && tuple_size(ipnet.ipv6) != 8, do: throw(false)
+
+    if (ipnet.ipv4 == default(:ipv4)) && (ipnet.ipv6 == default(:ipv6)) do 
+      throw(false)
+    end 
+
+    if ipnet.ipv4 != default(:ipv4) && !valid_ip?(ipnet.ipv4), do: throw(false) 
+    if ipnet.ipv6 == default(:ipv6) do 
+      true
+    else 
+      valid_ip?(ipnet.ipv6)  
+    end
+  catch 
+    any -> any
+  end
+end
