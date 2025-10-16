@@ -5,6 +5,7 @@ defmodule Teleflex.Driver do
 
   @type feedback() :: :ok | {:error, reason :: String.t()}
   @type response() :: {:ok, __MODULE__.t()} | {:error, String.t()}
+  @type advice() :: __MODULE__.t() | {:error, String.t()}
 
   @callback start(ipnet :: IPnet.t()) :: feedback()
   @callback connect(my :: IPnet.t(), its :: IPnet.t()) :: response()

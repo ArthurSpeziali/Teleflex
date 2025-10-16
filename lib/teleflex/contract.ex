@@ -135,7 +135,8 @@ defmodule Teleflex.Contract do
       new = %{contract | 
         blob: text, 
         size: size, 
-        hash: hash
+        hash: hash,
+        compromise: :process
       }
       {:ok, new}
     else 

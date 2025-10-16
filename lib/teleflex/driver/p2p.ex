@@ -13,7 +13,7 @@ defmodule Teleflex.Driver.P2P do
     dest = IPnet.get_addr(my_ipnet)
     node = :"#{@node_name}@#{dest}"
 
-    Process.register(self(), @node_proc)
+    # Process.register(self(), @node_proc)
 
     case Node.start(node) do
       {:ok, _pid} -> 
