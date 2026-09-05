@@ -12,7 +12,11 @@ defmodule Teleflex do
     ipnet = IPnet.my()
     :ets.insert(:teleflex, {:ipnet, ipnet})
 
-    Driver.start(ipnet)
+    # Inicialize the Driver 
+    case Driver.start(ipnet) do 
+      :ok -> :ok 
+      {:error, reason} -> raise reason
+    end 
   end
 
   @spec connect(dest :: String.t()) :: Contract.response()

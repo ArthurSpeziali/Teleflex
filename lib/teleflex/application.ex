@@ -7,9 +7,11 @@ defmodule Teleflex.Application do
 
   @impl true
   def start(_type, _args) do
-    Teleflex.WireGuard.init()
-    Teleflex.init()
+    # Teleflex.init()
 
+    IO.puts("(!) Teleflex Inicializate!")
+    # IO.puts("(!) Node: #{Node.self()}")
+    
     ports = Teleflex.Ajuster.ports()
 
     Application.put_env(:kernel, :inet_dist_listen_min, ports.first)
