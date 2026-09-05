@@ -11,7 +11,7 @@ defmodule Teleflex.Driver.P2P do
   @spec start(ipnet :: IPnet.t()) :: Driver.feedback()
   def start(%IPnet{} = my_ipnet) do
     dest = IPnet.get_addr(my_ipnet)
-    node = :"#{@node_name}#{Enum.random(0..64//1)}@#{dest}"
+    node = :"#{@node_name}@#{dest}"
 
     # Process.register(self(), @node_proc)
     case Node.start(node) do

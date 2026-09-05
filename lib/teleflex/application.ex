@@ -7,10 +7,12 @@ defmodule Teleflex.Application do
 
   @impl true
   def start(_type, _args) do
-    # Teleflex.init()
+    if !System.get_env("TELEFLEX_NOINIT") do 
+      Teleflex.init()
+    end 
 
     IO.puts("(!) Teleflex Inicializate!")
-    # IO.puts("(!) Node: #{Node.self()}")
+    IO.puts("(!) Node: #{Node.self()}\n")
     
     ports = Teleflex.Ajuster.ports()
 
