@@ -7,6 +7,11 @@ defmodule Teleflex.Application do
 
   @impl true
   def start(_type, _args) do
+    ports = Teleflex.Ajuster.ports()
+
+    Application.put_env(:kernel, :inet_dist_listen_min, ports.first)
+    Application.put_env(:kernel, :inet_dist_listen_max, ports.last)
+
     if !System.get_env("TELEFLEX_NOINIT") do 
       Teleflex.init()
     end 
@@ -14,11 +19,6 @@ defmodule Teleflex.Application do
     IO.puts("(!) Teleflex Inicializate!")
     IO.puts("(!) Node: #{Node.self()}\n")
     
-    ports = Teleflex.Ajuster.ports()
-
-    Application.put_env(:kernel, :inet_dist_listen_min, ports.first)
-    Application.put_env(:kernel, :inet_dist_listen_max, ports.last)
-
     children = [
       # Starts a worker by calling: Teleflex.Worker.start_link(arg)
       # {Teleflex.Worker, arg}
