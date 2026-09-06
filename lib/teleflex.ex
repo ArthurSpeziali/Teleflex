@@ -47,7 +47,10 @@ defmodule Teleflex do
 
   @spec send(msg :: String.t()) :: Contract.response()
   def send(msg) when is_binary(msg) do 
-    {_key, contract} = :ets.lookup(:teleflex, :contract) |> List.first()
+    lookup = :ets.lookup(:teleflex, :contract) |> List.first()
+
+    if !lookup, do: throw("run 'connect/1' before this function")
+    {_key, contract} = lookup
     if contract == [], do: throw("run 'connect/1' before this function")
 
     case Contract.put_content(contract, msg) do

@@ -7,7 +7,7 @@ defmodule Teleflex.Server.Receiver do
       {:error, "server already started"}
     else
       pid = spawn(&receiver/0)
-      Process.register(pid, @node_proc)
+      # Process.register(pid, @node_proc)
 
       {:ok, pid}
     end

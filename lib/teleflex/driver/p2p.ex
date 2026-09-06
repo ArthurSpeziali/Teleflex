@@ -13,7 +13,7 @@ defmodule Teleflex.Driver.P2P do
     dest = IPnet.get_addr(my_ipnet)
     node = :"#{@node_name}@#{dest}"
 
-    # Process.register(self(), @node_proc)
+    Process.register(self(), @node_proc)
     case Node.start(node) do
       {:ok, _pid} -> 
         Node.set_cookie(@node_cookie) 
@@ -26,7 +26,7 @@ defmodule Teleflex.Driver.P2P do
 
   @spec connect(my :: IPnet.t(), its :: IPnet.t()) :: Driver.response()
   def connect(%IPnet{} = my, %IPnet{} = its) do 
-    dest = IPnet.get_addr(my)
+    dest = IPnet.get_addr(its)
     node = :"#{@node_name}@#{dest}"
     res = Node.connect(node)
 
