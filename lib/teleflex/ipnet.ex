@@ -316,7 +316,8 @@ defmodule Teleflex.IPnet do
   def get_addr(%__MODULE__{} = ipnet) do
     cond do
       ipnet.dns != default(:dns) -> ipnet.dns
-      ipnet.ipv6 != default(:ipv6) -> "[#{ipnet.ipv6 |> to_str!()}]"
+      # I neeed to review this condicion, because in the Elxiir 1.20, a valid IPv6 has no '[]'
+      ipnet.ipv6 != default(:ipv6) -> ipnet.ipv6 |> to_str!()
       true -> ipnet.ipv4 |> to_str!()
     end
   end
