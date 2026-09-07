@@ -22,6 +22,7 @@ defmodule Teleflex.Application do
     children = [
       # Starts a worker by calling: Teleflex.Worker.start_link(arg)
       # {Teleflex.Worker, arg}
+      {Teleflex.Server.Receiver, nil}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
