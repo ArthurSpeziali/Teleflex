@@ -1,6 +1,5 @@
 defmodule Teleflex.Server.Receiver do 
   use GenServer
-  alias Teleflex.Contract
   @node_proc Application.compile_env(:teleflex, :node_opts)[:proc]
 
   # GenServer functions 
@@ -27,8 +26,8 @@ defmodule Teleflex.Server.Receiver do
   # API functions 
   def receiver() do 
     receive do 
-      %Contract{} = contract -> 
-        IO.inspect(contract)
+      {_ip, message} -> 
+        IO.puts(message)
         receiver()
 
       :stop -> 
