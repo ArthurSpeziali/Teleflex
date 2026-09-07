@@ -13,7 +13,8 @@ defmodule Teleflex.Server.Receiver do
   end
   
   def init(state) do 
-    spawn_monitor(&receiver/0)
+    {receiver_pid, _ref} = spawn_monitor(&receiver/0)
+    Process.register(receiver_pid, @node_proc)
 
     {:ok, state}
   end 
